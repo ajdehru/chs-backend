@@ -1,5 +1,7 @@
 const { FRONTEND_URL } = require("../configs");
+const sendSms = require("../configs/sendSms");
 const User = require("../models/user");
+const UserOtp = require("../models/userOtp");
 const {
   sendResponse,
   generateToken,
@@ -13,47 +15,41 @@ const signUp = async (req, res) => {
   try {
     const { name, phoneNumber, email, password, address, role } = req.body;
 
-    if (!email || !password) {
-      return sendResponse(res, 400, "Email and Password are required!");
+    if (!phoneNumber || !password) {
+      return sendResponse(res, 400, "Phone number and password are required!");
     }
 
-    const existingUser = await User.findOne({ email: email?.toLowerCase() });
+    const existingUser = await User.findOne({ phoneNumber });
     if (existingUser) {
-      return sendResponse(res, 400, "This email already exists");
+      if (existingUser?.email == email?.toLowerCase()) {
+        return sendResponse(res, 400, "This email is already used");
+      }
+      return sendResponse(res, 400, "This phone number is already registered");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
-      ...req.body,
-      role: capitalizeFirstLetter(role),
+      name,
+      phoneNumber,
       email: email?.toLowerCase(),
       password: hashedPassword,
+      address,
+      role: capitalizeFirstLetter(role),
+      isVerified: false,
     });
 
     await newUser.save();
 
-    const user = await getUserByEmail(email);
+    sendOtpToPhoneNumber(phoneNumber);
 
-    const token = generateToken(user, "1h");
-
-    const data = {
-      name: user?.name || name,
-      link: `${FRONTEND_URL}account-type?token=${token}`,
-    };
-    console.log(data, "data");
-    // await forSendEmail({
-    //   template: "verify-email.html",
-    //   data,
-    //   subject: "Email Verification",
-    //   email: user.email,
-    // });
+    const user = await getUserByEmail(newUser?.email);
 
     return sendResponse(
       res,
       201,
-      "Registration successful. Please check your email for verification.",
-      hideInfo(user)
+      "Registration successful. An OTP has been sent to your phone number for verification.",
+      user
     );
   } catch (error) {
     return sendResponse(res, 500, error.message);
@@ -62,27 +58,39 @@ const signUp = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
   try {
-    const user = await getUserByEmail(req.body.email);
+    const user = await User?.findOne({ phoneNumber: req.body.phoneNumber });
     if (!user) {
       return sendResponse(res, 404, "User not found");
     }
 
-    const token = generateToken(user, "5m");
+    await sendOtpToPhoneNumber(user?.phoneNumber);
 
-    const data = {
-      name: user?.username || "",
-      link: `${FRONTEND_URL}reset-password?token=${token}`,
-    };
+    return sendResponse(res, 200, "Otp sent to phone number successfully.");
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
 
-    console.log(data, "data");
-    // await forSendEmail({
-    //   template: "reset-password.html",
-    //   data,
-    //   subject: "Reset Your Password",
-    //   email: user.email,
-    // });
+const verifyOtp = async (req, res) => {
+  try {
+    const { phoneNumber, otp } = req.body;
 
-    return sendResponse(res, 200, "Link Sent successfully.", []);
+    const userOtp = await UserOtp.findOne({ phoneNumber });
+    if (!userOtp) {
+      return sendResponse(res, 400, "No otp found ");
+    }
+
+    if (userOtp?.otp !== otp || userOtp?.otpExpiry < Date.now()) {
+      return sendResponse(res, 400, "Invalid or expired OTP");
+    }
+
+    await UserOtp.findByIdAndDelete(userOtp?._id);
+    let user = await User?.findOneAndUpdate(
+      { phoneNumber },
+      { isVerified: true }
+    );
+
+    return sendResponse(res, 200, "OTP verified successfully", hideInfo(user));
   } catch (error) {
     return sendResponse(res, 500, error.message);
   }
@@ -110,7 +118,7 @@ const userEmialVerify = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.params?.userId;
     if (!userId) {
       return sendResponse(res, 400, "User ID is required");
     }
@@ -199,14 +207,14 @@ const updateUser = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { phoneNumber, password } = req.body;
 
     // Check if email and password are provided
-    if (!email || !password) {
+    if (!phoneNumber || !password) {
       return sendResponse(res, 400, "Email and Password are required!");
     }
 
-    let user = await User.findOne({ email: email?.toLowerCase() });
+    let user = await User.findOne({ phoneNumber });
     if (!user) {
       return sendResponse(res, 400, "This account does not exist.");
     }
@@ -221,7 +229,7 @@ const login = async (req, res) => {
       return sendResponse(res, 400, "Incorrect password.");
     }
 
-    user = await getUserByEmail(email);
+    user = await getUserByEmail(user?.email);
 
     const token = generateToken(user);
 
@@ -359,6 +367,21 @@ const hideInfo = (data) => {
   return withoutSensitiveInfo;
 };
 
+const sendOtpToPhoneNumber = async (phoneNumber) => {
+  const otp = Math.floor(1000 + Math.random() * 9000);
+
+  const newUserOtp = new UserOtp({
+    otp,
+    otpExpiry: Date.now() + 10 * 60 * 1000,
+    phoneNumber,
+  });
+  await newUserOtp.save();
+
+  console.log("Otp : ", otp);
+  const message = `Your verification code is ${otp}. It is valid for 10 minutes.`;
+  // await sendSms(phoneNumber, message);
+};
+
 module.exports = {
   signUp,
   login,
@@ -371,4 +394,5 @@ module.exports = {
   hideInfo,
   updateUserDiscount,
   getUpdatedProfile,
+  verifyOtp,
 };

@@ -1,42 +1,24 @@
-const AWS = require("aws-sdk");
-const nodemailer = require("nodemailer");
-const {
-  AWS_REGION,
-  AWS_SECRET_ACCESS_KEY,
-  AWS_ACCESS_KEY_ID,
-  AWS_SES_EMAIL_FROM,
-} = require(".");
+const sgMail = require("@sendgrid/mail");
+const { SENDGRID_API_KEY, SENDGRID_EMAIL_FROM } = require(".");
 
-// Configure AWS
-AWS.config.update({
-  accessKeyId: AWS_ACCESS_KEY_ID,
-  secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  region: AWS_REGION,
-});
+sgMail.setApiKey(SENDGRID_API_KEY);
 
-// Create SES transporter
-const transporter = nodemailer.createTransport({
-  SES: new AWS.SES({ apiVersion: "2010-12-01" }),
-});
-
-const sendEmail = async (receiver, subject, html) => {
-  const mailOptions = {
-    from: AWS_SES_EMAIL_FROM,
-    to: receiver,
-    subject: subject,
-    html: html,
+const sendEmail = async (email, subject, message) => {
+  const emailData = {
+    to: email,
+    from: SENDGRID_EMAIL_FROM,
+    subject,
+    text: message,
+    html: `<p>${message}</p>`,
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.messageId);
-    return true;
+    await sgMail.send(emailData);
+    console.log(`Email sent successfully to ${email}`);
   } catch (error) {
-    console.error("Error sending email:", error);
-    return false;
+    console.error(`Failed to send email to ${email}:`, error.message);
+    throw new Error("Failed to send email");
   }
 };
 
-module.exports = {
-  sendEmail,
-};
+module.exports = sendEmail;

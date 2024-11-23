@@ -23,6 +23,7 @@ const userSchema = new Schema(
     phoneNumber: {
       type: Number,
       required: true,
+      unique: true,
     },
     coverImage: {
       type: String,
@@ -49,11 +50,7 @@ const userSchema = new Schema(
       enum: ["Pending", "Suspended", "Active", "Rejected"],
       default: "Pending",
     },
-    // reasonForSuspension: {
-    //   type: String,
-    //   default: null,
-    // },
-    emailVerified: {
+    isVerified: {
       type: Boolean,
       default: false,
     },
@@ -77,8 +74,7 @@ userSchema.pre("save", function (next) {
 });
 
 // Indexes
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ username: 1 });
+userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
 
 module.exports = mongoose.model("User", userSchema);

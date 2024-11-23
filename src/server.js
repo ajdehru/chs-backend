@@ -29,7 +29,7 @@ app.use("/uploads", express.static("uploads"));
 
 // routes
 app.use("/user", userRoutes);
-// app.use("/client", clientRoutes);
+// app.use("/profile", clientRoutes);
 // app.use("/model", modelRoutes);
 // app.use("/content", modelContentRoutes);
 // app.use("/interaction", interactionRoutes);
