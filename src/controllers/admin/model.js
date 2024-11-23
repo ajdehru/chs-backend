@@ -8,7 +8,7 @@ const ObjectId = require("mongoose").Types.ObjectId;
 const Content = require("../../models/content");
 const Client = require("../../models/client");
 const modelDocument = require("../../models/modelDocument");
-const model = require("../../models/model");
+const model = require("../../models/profile");
 
 const getAllUSersCount = async (req, res) => {
   try {

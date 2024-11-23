@@ -9,7 +9,6 @@ function responseError(statusCode, message) {
   if (message) {
     response.message = message;
   }
-  response.error = serverResponses[statusCode] || "Unknowm Error!";
   return response;
 }
 

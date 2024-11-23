@@ -4,12 +4,9 @@ const Schema = mongoose.Schema;
 // User schema
 const userSchema = new Schema(
   {
-    username: {
+    name: {
       type: String,
       required: true,
-      unique: true,
-      minlength: 3,
-      maxlength: 50,
     },
     email: {
       type: String,
@@ -23,35 +20,22 @@ const userSchema = new Schema(
       required: true,
       minlength: 6,
     },
-    birthday: {
-      type: Date,
+    phoneNumber: {
+      type: Number,
       required: true,
     },
     coverImage: {
-      // type: String,
-      type: Schema.Types.ObjectId,
-      ref: "Content",
-      default: null,
-    },
-    plusImage: {
-      // type: String,
-      type: Schema.Types.ObjectId,
-      ref: "Content",
+      type: String,
       default: null,
     },
     role: {
-      type: Schema.Types.ObjectId,
-      ref: "Role",
-      default: null,
+      type: String,
+      enum: ["Patient", "Doctor"],
+      default: "Patient",
     },
-    model: {
+    profile: {
       type: Schema.Types.ObjectId,
-      ref: "Model",
-      default: null,
-    },
-    client: {
-      type: Schema.Types.ObjectId,
-      ref: "Client",
+      ref: "Profile",
       default: null,
     },
     subscription: {
@@ -62,13 +46,13 @@ const userSchema = new Schema(
     notification: { type: Boolean, default: true },
     status: {
       type: String,
-      enum: ["Pending", "Suspended", "Active","Rejected"],
+      enum: ["Pending", "Suspended", "Active", "Rejected"],
       default: "Pending",
     },
-    reasonForSuspension: {
-      type: String,
-      default: null,
-    },
+    // reasonForSuspension: {
+    //   type: String,
+    //   default: null,
+    // },
     emailVerified: {
       type: Boolean,
       default: false,
@@ -81,10 +65,6 @@ const userSchema = new Schema(
       type: Date,
       default: Date.now,
     },
-    isOnline:{
-      type:Boolean,
-      enum:[true,false]
-    }
   },
   {
     timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" },
