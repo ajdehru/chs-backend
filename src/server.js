@@ -22,7 +22,9 @@ const {
 } = require("./routes/index.js");
 
 const app = express();
-const server = http.createServer(app);
+const server = http.createServer(app); 
+
+
 
 // Initialize Socket.IO with CORS configuration
 const io = new Server(server, {
