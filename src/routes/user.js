@@ -16,7 +16,6 @@ const {
 const { checkAuth } = require("../middlewares/auth");
 
 router.post("/register", signUp);
-
 router.post("/login", login);
 router.post("/forgot-password", forgotPassword);
 router.put("/verify-otp", verifyOtp);
