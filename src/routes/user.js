@@ -8,7 +8,6 @@ const {
   updateDp,
   getUser,
   forgotPassword,
-  userEmialVerify,
   getUpdatedProfile,
   verifyOtp,
 } = require("../controllers/user");

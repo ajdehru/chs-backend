@@ -1,6 +1,5 @@
 const { JWT_SECRET } = require("../configs");
 const jwt = require("jsonwebtoken");
-const serverResponses = require("./constant");
 
 function responseError(statusCode, message) {
   let response = {

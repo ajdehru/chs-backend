@@ -6,17 +6,7 @@ const cors = require("cors");
 const http = require("http");
 
 const { PORT } = require("./configs/index.js");
-const {
-  userRoutes,
-  modelRoutes,
-  authRoutes,
-  clientRoutes,
-  modelContentRoutes,
-  interactionRoutes,
-  chatRoutes,
-  paymentRoutes,
-  adminRoutes,
-} = require("./routes/index.js");
+const { userRoutes } = require("./routes/index.js");
 
 const app = express();
 const server = http.createServer(app);
