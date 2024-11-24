@@ -1,4 +1,4 @@
-const Model = require("../models/profile");
+const Model = require("../models/patientProfile");
 const ModelDocument = require("../models/modelDocument");
 const ModelContent = require("../models/content");
 const SocialMedia = require("../models/social");

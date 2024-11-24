@@ -36,7 +36,7 @@ const userSchema = new Schema(
     },
     profile: {
       type: Schema.Types.ObjectId,
-      ref: "Profile",
+      // ref: "Profile",
       default: null,
     },
     subscription: {

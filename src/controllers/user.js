@@ -1,5 +1,6 @@
 const { FRONTEND_URL } = require("../configs");
 const sendSms = require("../configs/sendSms");
+const patientProfile = require("../models/patientProfile");
 const User = require("../models/user");
 const UserOtp = require("../models/userOtp");
 const {
@@ -29,6 +30,14 @@ const signUp = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const newPatientUser = new patientProfile({
+      firstName: name,
+      phoneNumber,
+      email: email?.toLowerCase(),
+      address,
+    });
+    await newPatientUser.save();
+
     const newUser = new User({
       name,
       phoneNumber,
@@ -36,6 +45,7 @@ const signUp = async (req, res) => {
       password: hashedPassword,
       address,
       role: capitalizeFirstLetter(role),
+      profile: newPatientUser?._id,
       isVerified: false,
     });
 
@@ -134,23 +144,9 @@ const updateUser = async (req, res) => {
 
     const updateFields = {};
 
-    const {
-      email,
-      password,
-      oldPassword,
-      name,
-      phoneNumber,
-      role,
-      address,
-      profile,
-      notification,
-    } = req.body;
+    const { password, oldPassword, role, profile, notification } = req.body;
 
-    if (email) updateFields.email = email;
-    if (name) updateFields.name = name;
-    if (phoneNumber) updateFields.phoneNumber = phoneNumber;
     if (profile) updateFields.profile = profile;
-    if (address) updateFields.address = address;
     if (typeof notification !== "undefined")
       updateFields.notification = notification;
 
