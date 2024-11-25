@@ -6,7 +6,11 @@ const cors = require("cors");
 const http = require("http");
 
 const { PORT } = require("./configs/index.js");
-const { userRoutes } = require("./routes/index.js");
+const {
+  userRoutes,
+  patientRoutes,
+  doctorRoutes,
+} = require("./routes/index.js");
 
 const app = express();
 const server = http.createServer(app);
@@ -19,8 +23,8 @@ app.use("/uploads", express.static("uploads"));
 
 // routes
 app.use("/user", userRoutes);
-// app.use("/profile", clientRoutes);
-// app.use("/model", modelRoutes);
+app.use("/patient", patientRoutes);
+app.use("/doctor", doctorRoutes);
 // app.use("/content", modelContentRoutes);
 // app.use("/interaction", interactionRoutes);
 // app.use("/chat", chatRoutes);

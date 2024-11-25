@@ -7,13 +7,14 @@ const {
 } = require("../utils");
 const bcrypt = require("bcrypt");
 const { calculateAge } = require("../utils/helpers/patient");
+const PatientAppointment = require("../models/userAppointment");
 
 const updateProfile = async (req, res) => {
   try {
     const user = await User.findById(req.params?.userId);
     const profileId = user?.profile;
     if (!profileId) {
-      return sendResponse(res, 400, "Patient ID is required");
+      return sendResponse(res, 400, "Profile id is required");
     }
 
     const patient = await patientProfile.findById(profileId);
@@ -28,7 +29,7 @@ const updateProfile = async (req, res) => {
       firstName,
       lastName,
       birthDate,
-      phoneNumber,
+      // phoneNumber,
       email,
       bloodGroup,
       address,
@@ -39,7 +40,7 @@ const updateProfile = async (req, res) => {
       gender,
     } = req.body;
 
-    if (gender) updateFields.gender = gender;
+    if (gender) updateFields.gender = capitalizeFirstLetter(gender);
     if (lastName) updateFields.lastName = lastName;
     if (bloodGroup) updateFields.bloodGroup = bloodGroup;
     if (city) updateFields.city = city;
@@ -50,25 +51,24 @@ const updateProfile = async (req, res) => {
       updateFields.birthDate = birthDate;
 
       let isAge = calculateAge(birthDate);
-      updateFields.age = `${isAge?.years} years ${isAge?.months
-        .toString()
-        .padStart(2, "0")} months`;
+      updateFields.age = `${isAge?.years} years ${isAge?.months} months`;
     }
-    if (phoneNumber) {
-      updateFields.phoneNumber = phoneNumber;
-      updateUserFields.phoneNumber = phoneNumber;
-    }
+
+    // if (phoneNumber) {
+    //   updateFields.phoneNumber = phoneNumber;
+    //   updateUserFields.phoneNumber = phoneNumber;
+    // }
     if (firstName) {
-      updateFields.firstName = firstName;
-      updateUserFields.name = firstName;
+      updateFields.firstName = capitalizeFirstLetter(firstName);
+      updateUserFields.name = capitalizeFirstLetter(firstName);
     }
     if (address) {
       updateFields.address = address;
       updateUserFields.address = address;
     }
     if (email) {
-      updateFields.email = email?.toLoWerCase();
-      updateUserFields.email = email?.toLoWerCase();
+      updateFields.email = email?.toLowerCase();
+      updateUserFields.email = email?.toLowerCase();
     }
     if (updateUserFields && Object?.keys(updateUserFields)?.length > 0) {
       await User.findByIdAndUpdate(user?._id, updateUserFields, {
@@ -99,6 +99,388 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const createAppointment = async (req, res) => {
+  try {
+    if (!req.params?.patientId) {
+      return sendResponse(res, 400, "Patient id is required!");
+    }
+    const {
+      name,
+      date,
+      time,
+      refDoctor,
+      amount,
+      reason,
+      comments,
+      status,
+      appointmentFor,
+      appointmentPersonName,
+      isInsurance,
+      symtoms,
+      appointmentType,
+    } = req.body;
+
+    if (!date || !reason || !refDoctor) {
+      return sendResponse(
+        res,
+        400,
+        "Appointment date ,reason and ref doctor are required!"
+      );
+    }
+
+    const newAppointment = new PatientAppointment({
+      ...req.body,
+      appointmentFor: capitalizeFirstLetter(appointmentFor),
+      appointmentPersonName: capitalizeFirstLetter(appointmentPersonName),
+      appointmentType: capitalizeFirstLetter(appointmentType),
+      patientId: req.params?.patientId,
+    });
+    await newAppointment.save();
+
+    return sendResponse(
+      res,
+      201,
+      "New appointment is created successful.",
+      newAppointment?.toObject()
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const addAppointmentAttachment = async (req, res) => {
+  try {
+    if (!req.params?.appoitmentId) {
+      return sendResponse(res, 400, "Appoitment id is required!");
+    }
+    const { file } = req;
+
+    let attched = null;
+    if (file) {
+      attched = file.location;
+    }
+    const newAppointment = await PatientAppointment.findByIdAndUpdate(
+      req.params?.appoitmentId,
+      {
+        attachment: attched,
+      }
+    );
+
+    return sendResponse(res, 201, "Attchedment added.", newAppointment);
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const getAppointments = async (req, res) => {
+  try {
+    if (!req.params?.patientId) {
+      return sendResponse(res, 400, "Patient id is required!");
+    }
+
+    const Appointments = await PatientAppointment.find({
+      userId: req.params?.userId,
+    })
+      // .populate("refDoctor")
+      .populate("patientId")
+      .exec();
+
+    return sendResponse(
+      res,
+      201,
+      "All appointments  is getting successful.",
+      Appointments
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const getAppointmentById = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Appointment id is required!");
+    }
+
+    const Appointment = await PatientAppointment
+      .findById(req.params?.id)
+      // .populate("refDoctor")
+      .populate("patientId")
+      .exec();
+
+    return sendResponse(
+      res,
+      201,
+      "Appointment is getting successful.",
+      Appointment
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const updateAppointmentById = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Appointment id is required!");
+    }
+
+    const Appointment = await userAppointment.findByIdAndUpdate(
+      req.params?.id,
+      { ...req.body }
+    );
+
+    return sendResponse(
+      res,
+      201,
+      "Appointment is updated successful.",
+      Appointment
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const updateAppointmentStatus = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Appointment id is required!");
+    }
+
+    const Appointment = await userAppointment.findByIdAndUpdate(
+      req.params?.id,
+      { status: req.body?.status }
+    );
+
+    return sendResponse(
+      res,
+      201,
+      "Appointment status is updated successful.",
+      Appointment
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const createReport = async (req, res) => {
+  try {
+    if (!req.params?.patientId) {
+      return sendResponse(res, 400, "PatientId id is required!");
+    }
+    const { name, date, description } = req.body;
+
+    if (!name || !description) {
+      return sendResponse(
+        res,
+        400,
+        "Report name and description are required!"
+      );
+    }
+
+    const newReport = new medicalReport({
+      ...req.body,
+      patientId: req.params?.patientId,
+    });
+
+    await newReport.save();
+
+    return sendResponse(
+      res,
+      201,
+      "New appointment is created successful.",
+      newReport
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const getReports = async (req, res) => {
+  try {
+    if (!req.params?.patientId) {
+      return sendResponse(res, 400, "Patient id is required!");
+    }
+
+    const reports = await medicalReport
+      .find({ patientId: req.params?.patientId })
+      .populate("patientId")
+      .exec();
+
+    return sendResponse(
+      res,
+      201,
+      "New appointment is created successful.",
+      reports
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const getReportById = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Appointment id is required!");
+    }
+
+    const report = await medicalReport
+      .findById(req.params?.id)
+      .populate("patientId")
+      .exec();
+
+    return sendResponse(
+      res,
+      201,
+      "New appointment is created successful.",
+      report
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const updateReportById = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Appointment id is required!");
+    }
+
+    const Report = await medicalReport.findByIdAndUpdate(req.params?.id, {
+      ...req.body,
+    });
+
+    return sendResponse(res, 201, "Appointment is updated successful.", Report);
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const deleteReport = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Appointment id is required!");
+    }
+
+    const report = await medicalReport.findByIdAndDelete(req.params?.id);
+
+    return sendResponse(
+      res,
+      201,
+      "Appointment status is updated successful.",
+      report
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const createPrescription = async (req, res) => {
+  try {
+    if (!req.params?.patientId) {
+      return sendResponse(res, 400, "PatientId id is required!");
+    }
+    const { name, date, refDoctor } = req.body;
+
+    if (!name || !refDoctor) {
+      return sendResponse(
+        res,
+        400,
+        "Prescription name and doctor are required!"
+      );
+    }
+
+    const newPrescription = new Prescription({
+      ...req.body,
+      patientId: req.params?.patientId,
+    });
+
+    await newPrescription.save();
+
+    return sendResponse(
+      res,
+      201,
+      "New prescription is created successful.",
+      newPrescription
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const getPrescriptions = async (req, res) => {
+  try {
+    if (!req.params?.patientId) {
+      return sendResponse(res, 400, "Patient id is required!");
+    }
+
+    const prescription = await Prescription.find({
+      patientId: req.params?.patientId,
+    })
+      .populate("patientId")
+      .exec();
+
+    return sendResponse(
+      res,
+      201,
+      "Prescriptions is getting successful.",
+      prescription
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const getPrescriptionById = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Prescription id is required!");
+    }
+
+    const prescription = await Prescription.findById(req.params?.id)
+      .populate("patientId")
+      .exec();
+
+    return sendResponse(
+      res,
+      201,
+      "Prescription is getting successful.",
+      prescription
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const deletePrescription = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Prescription id is required!");
+    }
+
+    const prescription = await Prescription.findByIdAndDelete(req.params?.id);
+
+    return sendResponse(res, 201, "Prescription is deleted.", prescription);
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
 module.exports = {
   updateProfile,
+  createAppointment,
+  addAppointmentAttachment,
+  getAppointments,
+  getAppointmentById,
+  updateAppointmentById,
+  updateAppointmentStatus,
+  createReport,
+  getReports,
+  getReportById,
+  updateReportById,
+  deleteReport,
+  createPrescription,
+  getPrescriptions,
+  getPrescriptionById,
+  deletePrescription,
 };

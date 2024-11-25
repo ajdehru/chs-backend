@@ -1,5 +1,6 @@
 const { FRONTEND_URL } = require("../configs");
 const sendSms = require("../configs/sendSms");
+const doctorProfile = require("../models/doctorProfile");
 const patientProfile = require("../models/patientProfile");
 const User = require("../models/user");
 const UserOtp = require("../models/userOtp");
@@ -30,13 +31,25 @@ const signUp = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newPatientUser = new patientProfile({
-      firstName: name,
-      phoneNumber,
-      email: email?.toLowerCase(),
-      address,
-    });
-    await newPatientUser.save();
+    let newProfile = null;
+    if (role?.toLowerCase() == "patient") {
+      newProfile = new patientProfile({
+        firstName: name,
+        phoneNumber,
+        email: email?.toLowerCase(),
+        address,
+      });
+    } else if (role?.toLowerCase() == "doctor") {
+      newProfile = new doctorProfile({
+        firstName: name,
+        displayName: name,
+        phoneNumber,
+        email: email?.toLowerCase(),
+        address,
+      });
+    }
+
+    await newProfile.save();
 
     const newUser = new User({
       name,
@@ -45,7 +58,7 @@ const signUp = async (req, res) => {
       password: hashedPassword,
       address,
       role: capitalizeFirstLetter(role),
-      profile: newPatientUser?._id,
+      profile: newProfile?._id,
       isVerified: false,
     });
 
@@ -212,7 +225,7 @@ const login = async (req, res) => {
 
     // Check if email and password are provided
     if (!phoneNumber || !password) {
-      return sendResponse(res, 400, "Email and Password are required!");
+      return sendResponse(res, 400, "Phone number and Password are required!");
     }
 
     let user = await User.findOne({ phoneNumber });

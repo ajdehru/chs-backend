@@ -1,17 +1,17 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const patientProfileSchema = new Schema(
+const doctorProfileSchema = new Schema(
   {
-    patientId: {
-      type: String,
-      default: null,
-    },
     firstName: {
       type: String,
       default: null,
     },
     lastName: {
+      type: String,
+      default: null,
+    },
+    displayName: {
       type: String,
       default: null,
     },
@@ -23,21 +23,12 @@ const patientProfileSchema = new Schema(
       type: String,
       default: null,
     },
-    birthDate: {
+    designation: {
       type: String,
       default: null,
     },
-    gender: {
-      type: String,
-      enum: ["Male", "Female", "Other"],
-      default: "Male",
-    },
-    age: {
-      type: String,
-      default: null,
-    },
-    bloodGroup: {
-      type: String,
+    languages: {
+      type: [String],
       default: null,
     },
     address: {
@@ -56,8 +47,12 @@ const patientProfileSchema = new Schema(
       type: String,
       default: null,
     },
-    pinCode: {
-      type: Number,
+    availability: {
+      type: Boolean,
+      default: true,
+    },
+    achievement: {
+      type: String,
       default: null,
     },
     updatedAt: {
@@ -74,12 +69,6 @@ const patientProfileSchema = new Schema(
   }
 );
 
-patientProfileSchema.pre("save", function (next) {
-  this.updatedAt = Date.now();
-  next();
-});
+doctorProfileSchema.index({ availability: 1 });
 
-patientProfileSchema.index({ bloodGroup: 1 });
-patientProfileSchema.index({ city: 1 });
-
-module.exports = mongoose.model("PatientProfile", patientProfileSchema);
+module.exports = mongoose.model("DoctorProfile", doctorProfileSchema);
