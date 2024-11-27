@@ -4,6 +4,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const http = require("http");
+const { Server } = require('socket.io');
 
 const { PORT } = require("./configs/index.js");
 const {
@@ -25,11 +26,25 @@ app.use("/uploads", express.static("uploads"));
 app.use("/user", userRoutes);
 app.use("/patient", patientRoutes);
 app.use("/doctor", doctorRoutes);
+
 // app.use("/content", modelContentRoutes);
 // app.use("/interaction", interactionRoutes);
 // app.use("/chat", chatRoutes);
 // app.use("/payment", paymentRoutes);
 // app.use("/admin", adminRoutes);
+
+// Socket setup
+global.io = new Server(server, {
+  cors: {
+    origin: "*",
+  },
+});
+
+global.io.on("connection", (socket) => {
+  socket.on("disconnect", () => {
+    console.log("user disconnected");
+  });
+});
 
 // testing router
 app.get("/", (req, res) => {

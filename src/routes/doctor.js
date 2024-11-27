@@ -3,8 +3,10 @@ const router = express.Router();
 
 // const { upload } = require("../middlewares/multerS3");
 const { checkAuth } = require("../middlewares/auth");
-const { updateProfile } = require("../controllers/doctor");
+const { updateProfile, getAllDoctors } = require("../controllers/doctor");
 
 router.put("/:userId", checkAuth, updateProfile);
+
+router.get("/list", checkAuth, getAllDoctors);
 
 module.exports = router;

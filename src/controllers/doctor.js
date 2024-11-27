@@ -87,6 +87,20 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const getAllDoctors = async (req, res) => {
+  try {
+    let doctors = await User.find({ role: "Doctor" }).populate("profile").exec();
+    if (!doctors || doctors?.length == 0) {
+      return sendResponse(res, 200, "Doctors not found");
+    }
+
+    return sendResponse(res, 200, "User Detail getting successfully", doctors);
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
 module.exports = {
   updateProfile,
+  getAllDoctors,
 };

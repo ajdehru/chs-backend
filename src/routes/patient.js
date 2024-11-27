@@ -21,6 +21,7 @@ const {
   deletePrescription,
   addAppointmentAttachment,
 } = require("../controllers/patient");
+const { generateSymptomSummary } = require("../controllers/symtoms");
 
 router.put("/:userId", checkAuth, updateProfile);
 
@@ -46,5 +47,7 @@ router.post("/prescription/:patientId", checkAuth, createPrescription);
 router.get("/prescription/:patientId", checkAuth, getPrescriptions);
 router.get("/prescription/:id", checkAuth, getPrescriptionById);
 router.delete("/prescription/:id", checkAuth, deletePrescription);
+
+router.post("/symptom-checker", generateSymptomSummary);
 
 module.exports = router;
