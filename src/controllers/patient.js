@@ -202,8 +202,7 @@ const getAppointmentById = async (req, res) => {
       return sendResponse(res, 400, "Appointment id is required!");
     }
 
-    const Appointment = await PatientAppointment
-      .findById(req.params?.id)
+    const Appointment = await PatientAppointment.findById(req.params?.id)
       // .populate("refDoctor")
       .populate("patientId")
       .exec();
@@ -225,7 +224,7 @@ const updateAppointmentById = async (req, res) => {
       return sendResponse(res, 400, "Appointment id is required!");
     }
 
-    const Appointment = await userAppointment.findByIdAndUpdate(
+    const Appointment = await PatientAppointment.findByIdAndUpdate(
       req.params?.id,
       { ...req.body }
     );
@@ -247,7 +246,7 @@ const updateAppointmentStatus = async (req, res) => {
       return sendResponse(res, 400, "Appointment id is required!");
     }
 
-    const Appointment = await userAppointment.findByIdAndUpdate(
+    const Appointment = await PatientAppointment.findByIdAndUpdate(
       req.params?.id,
       { status: req.body?.status }
     );
