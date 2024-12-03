@@ -8,6 +8,7 @@ const {
 const bcrypt = require("bcrypt");
 const { calculateAge } = require("../utils/helpers/patient");
 const PatientAppointment = require("../models/userAppointment");
+const symptomReport = require("../models/symptomReport");
 
 const updateProfile = async (req, res) => {
   try {
@@ -465,6 +466,68 @@ const deletePrescription = async (req, res) => {
   }
 };
 
+const saveSymptomReport = async (req, res) => {
+  try {
+    if (!req.params?.patientId) {
+      return sendResponse(res, 400, "PatientId id is required!");
+    }
+
+    const newReport = new symptomReport({
+      ...req.body,
+      patientId: req.params?.patientId,
+    });
+
+    await newReport.save();
+
+    return sendResponse(
+      res,
+      201,
+      "New symptom report is created successful.",
+      newReport
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const getSymptomReports = async (req, res) => {
+  try {
+    if (!req.params?.patientId) {
+      return sendResponse(res, 400, "PatientId id is required!");
+    }
+
+    const allReports = await symptomReport.find({
+      patientId: req.params?.patientId,
+    });
+
+    return sendResponse(
+      res,
+      200,
+      "All symptom reports is fetched successful.",
+      allReports
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const deleteSymptomReport = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Report ID is required!");
+    }
+
+    const deletedReport = await symptomReport.findByIdAndDelete(req.params.id);
+    if (!deletedReport) {
+      return sendResponse(res, 404, "Symptom report not found!");
+    }
+
+    return sendResponse(res, 200, "Symptom report deleted successfully.");
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
 module.exports = {
   updateProfile,
   createAppointment,
@@ -482,4 +545,7 @@ module.exports = {
   getPrescriptions,
   getPrescriptionById,
   deletePrescription,
+  saveSymptomReport,
+  getSymptomReports,
+  deleteSymptomReport,
 };

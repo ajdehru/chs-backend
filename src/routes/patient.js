@@ -20,6 +20,9 @@ const {
   getPrescriptionById,
   deletePrescription,
   addAppointmentAttachment,
+  saveSymptomReport,
+  getSymptomReports,
+  deleteSymptomReport,
 } = require("../controllers/patient");
 const { generateSymptomSummary } = require("../controllers/symtoms");
 
@@ -49,5 +52,8 @@ router.get("/prescription/:id", checkAuth, getPrescriptionById);
 router.delete("/prescription/:id", checkAuth, deletePrescription);
 
 router.post("/symptom-checker", generateSymptomSummary);
+router.post("/save-checked-symptom/:patientId", saveSymptomReport);
+router.get("/reports/:patientId", getSymptomReports);
+router.delete("/report/:id", deleteSymptomReport);
 
 module.exports = router;
