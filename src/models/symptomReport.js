@@ -5,7 +5,7 @@ const symptomReportSchema = new Schema(
   {
     patientId: {
       type: Schema.Types.ObjectId,
-      ref: "patientProfile",
+      ref: "PatientProfile",
       default: null,
     },
     age: {

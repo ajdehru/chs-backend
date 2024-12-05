@@ -1,13 +1,22 @@
 const express = require("express");
-const   router = express.Router();
+const router = express.Router();
 
 // const { upload } = require("../middlewares/multerS3");
 const { checkAuth } = require("../middlewares/auth");
-const { updateProfile, getAllDoctors, getAllPatientAppointment } = require("../controllers/doctor");
+const {
+  updateProfile,
+  getAllDoctors,
+  getAllPatientAppointment,
+  getDoctorClinic,
+  getDoctorDashboardData,
+  getAllPatientsWithAppointmentDetails,
+} = require("../controllers/doctor");
 
 router.put("/:userId", checkAuth, updateProfile);
 router.get("/appointment/:doctorId", getAllPatientAppointment);
-
+router.get("/patient/:doctorId", getAllPatientsWithAppointmentDetails);
+router.get("/dashboard/:doctorId", getDoctorDashboardData);
+router.get("/clinic/:doctorId", getDoctorClinic);
 
 router.get("/list", checkAuth, getAllDoctors);
 
