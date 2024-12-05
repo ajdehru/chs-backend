@@ -331,11 +331,11 @@ const getUserWithProfile = async (email) => {
     if (!user) return null;
 
     ({ password, notification, ...withoutSensitiveInfo } = user.toObject());
-
-    const profile = user.profile
+    const profile = user.role!="Doctor"
       ? await patientProfile.findById(user.profile)
-      : null;
+      : await doctorProfile.findById(user.profile);
 
+      console.log(profile,"user")
     return {
       ...withoutSensitiveInfo,
       profile: profile ? profile.toObject() : null,
