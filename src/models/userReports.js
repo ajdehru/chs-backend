@@ -5,10 +5,14 @@ const reportsSchema = new Schema(
   {
     patientId: {
       type: Schema.Types.ObjectId,
-      ref: "patientProfile",
+      ref: "PatientProfile",
       default: null,
     },
     name: {
+      type: String,
+      default: null,
+    },
+    attachment: {
       type: String,
       default: null,
     },

@@ -5,10 +5,14 @@ const prescriptionSchema = new Schema(
   {
     patientId: {
       type: Schema.Types.ObjectId,
-      ref: "patientProfile",
+      ref: "PatientProfile",
       default: null,
     },
     name: {
+      type: String,
+      default: null,
+    },
+    attachment: {
       type: String,
       default: null,
     },
@@ -18,7 +22,7 @@ const prescriptionSchema = new Schema(
     },
     refDoctor: {
       type: Schema.Types.ObjectId,
-      ref: "doctorProfile",
+      ref: "DoctorProfile",
       default: null,
     },
     updatedAt: {

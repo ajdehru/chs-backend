@@ -8,6 +8,8 @@ const {
 const bcrypt = require("bcrypt");
 const { calculateAge } = require("../utils/helpers/patient");
 const PatientAppointment = require("../models/userAppointment");
+const PatientReports = require("../models/userReports");
+const PatientPrescription = require("../models/userPrescription");
 const symptomReport = require("../models/symptomReport");
 
 const updateProfile = async (req, res) => {
@@ -278,19 +280,14 @@ const createReport = async (req, res) => {
       );
     }
 
-    const newReport = new medicalReport({
+    const newReport = new PatientReports({
       ...req.body,
       patientId: req.params?.patientId,
     });
 
     await newReport.save();
 
-    return sendResponse(
-      res,
-      201,
-      "New appointment is created successful.",
-      newReport
-    );
+    return sendResponse(res, 201, "Report is added successful.", newReport);
   } catch (error) {
     return sendResponse(res, 500, error.message);
   }
@@ -302,15 +299,16 @@ const getReports = async (req, res) => {
       return sendResponse(res, 400, "Patient id is required!");
     }
 
-    const reports = await medicalReport
-      .find({ patientId: req.params?.patientId })
+    const reports = await PatientReports.find({
+      patientId: req.params?.patientId,
+    })
       .populate("patientId")
       .exec();
 
     return sendResponse(
       res,
       201,
-      "New appointment is created successful.",
+      "All reports are getting successful.",
       reports
     );
   } catch (error) {
@@ -321,20 +319,14 @@ const getReports = async (req, res) => {
 const getReportById = async (req, res) => {
   try {
     if (!req.params?.id) {
-      return sendResponse(res, 400, "Appointment id is required!");
+      return sendResponse(res, 400, "Report id is required!");
     }
 
-    const report = await medicalReport
-      .findById(req.params?.id)
+    const report = await PatientReports.findById(req.params?.id)
       .populate("patientId")
       .exec();
 
-    return sendResponse(
-      res,
-      201,
-      "New appointment is created successful.",
-      report
-    );
+    return sendResponse(res, 201, "Report is getting successful.", report);
   } catch (error) {
     return sendResponse(res, 500, error.message);
   }
@@ -343,14 +335,35 @@ const getReportById = async (req, res) => {
 const updateReportById = async (req, res) => {
   try {
     if (!req.params?.id) {
-      return sendResponse(res, 400, "Appointment id is required!");
+      return sendResponse(res, 400, "Report id is required!");
     }
 
-    const Report = await medicalReport.findByIdAndUpdate(req.params?.id, {
+    const Report = await PatientReports.findByIdAndUpdate(req.params?.id, {
       ...req.body,
     });
 
-    return sendResponse(res, 201, "Appointment is updated successful.", Report);
+    return sendResponse(res, 201, "Report is updated successful.", Report);
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const addReportAttachment = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Report id is required!");
+    }
+    const { file } = req;
+
+    let attched = null;
+    if (file) {
+      attched = file.location;
+    }
+    const report = await PatientReports.findByIdAndUpdate(req.params?.id, {
+      attachment: attched,
+    });
+
+    return sendResponse(res, 201, "Attchedment added.", report);
   } catch (error) {
     return sendResponse(res, 500, error.message);
   }
@@ -359,17 +372,12 @@ const updateReportById = async (req, res) => {
 const deleteReport = async (req, res) => {
   try {
     if (!req.params?.id) {
-      return sendResponse(res, 400, "Appointment id is required!");
+      return sendResponse(res, 400, "Report id is required!");
     }
 
-    const report = await medicalReport.findByIdAndDelete(req.params?.id);
+    const report = await PatientReports.findByIdAndDelete(req.params?.id);
 
-    return sendResponse(
-      res,
-      201,
-      "Appointment status is updated successful.",
-      report
-    );
+    return sendResponse(res, 201, "Report is deleted.", report);
   } catch (error) {
     return sendResponse(res, 500, error.message);
   }
@@ -390,7 +398,7 @@ const createPrescription = async (req, res) => {
       );
     }
 
-    const newPrescription = new Prescription({
+    const newPrescription = new PatientPrescription({
       ...req.body,
       patientId: req.params?.patientId,
     });
@@ -408,16 +416,38 @@ const createPrescription = async (req, res) => {
   }
 };
 
+const addPrescriptionAttachment = async (req, res) => {
+  try {
+    if (!req.params?.id) {
+      return sendResponse(res, 400, "Prescription id is required!");
+    }
+    const { file } = req;
+
+    let attched = null;
+    if (file) {
+      attched = file.location;
+    }
+    const report = await PatientPrescription.findByIdAndUpdate(req.params?.id, {
+      attachment: attched,
+    });
+
+    return sendResponse(res, 201, "Prescription attchedment added.", report);
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
 const getPrescriptions = async (req, res) => {
   try {
     if (!req.params?.patientId) {
       return sendResponse(res, 400, "Patient id is required!");
     }
 
-    const prescription = await Prescription.find({
+    const prescription = await PatientPrescription.find({
       patientId: req.params?.patientId,
     })
       .populate("patientId")
+      .populate("refDoctor")
       .exec();
 
     return sendResponse(
@@ -437,8 +467,9 @@ const getPrescriptionById = async (req, res) => {
       return sendResponse(res, 400, "Prescription id is required!");
     }
 
-    const prescription = await Prescription.findById(req.params?.id)
+    const prescription = await PatientPrescription.findById(req.params?.id)
       .populate("patientId")
+      .populate("refDoctor")
       .exec();
 
     return sendResponse(
@@ -458,7 +489,9 @@ const deletePrescription = async (req, res) => {
       return sendResponse(res, 400, "Prescription id is required!");
     }
 
-    const prescription = await Prescription.findByIdAndDelete(req.params?.id);
+    const prescription = await PatientPrescription.findByIdAndDelete(
+      req.params?.id
+    );
 
     return sendResponse(res, 201, "Prescription is deleted.", prescription);
   } catch (error) {
@@ -541,7 +574,9 @@ module.exports = {
   getReportById,
   updateReportById,
   deleteReport,
+  addReportAttachment,
   createPrescription,
+  addPrescriptionAttachment,
   getPrescriptions,
   getPrescriptionById,
   deletePrescription,

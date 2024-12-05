@@ -89,7 +89,9 @@ const updateProfile = async (req, res) => {
 
 const getAllDoctors = async (req, res) => {
   try {
-    let doctors = await User.find({ role: "Doctor" }).populate("profile").exec();
+    let doctors = await User.find({ role: "Doctor" })
+      .populate("profile")
+      .exec();
     if (!doctors || doctors?.length == 0) {
       return sendResponse(res, 200, "Doctors not found");
     }
@@ -100,7 +102,32 @@ const getAllDoctors = async (req, res) => {
   }
 };
 
+const getAllPatientAppointment = async (req, res) => {
+  try {
+    if (!req.params?.doctorId) {
+      return sendResponse(res, 400, "Doctor id is required!");
+    }
+
+    const Appointments = await PatientAppointment.find({
+      refDoctor: req.params?.refDoctor,
+    })
+      .populate("refDoctor")
+      .populate("patientId")
+      .exec();
+
+    return sendResponse(
+      res,
+      201,
+      "All appointments  is getting successful.",
+      Appointments
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
 module.exports = {
   updateProfile,
   getAllDoctors,
+  getAllPatientAppointment,
 };
