@@ -11,8 +11,9 @@ const {
   getUpdatedProfile,
   verifyOtp,
 } = require("../controllers/user");
-// const { upload } = require("../middlewares/multerS3");
+const { upload } = require("../middlewares/multerS3");
 const { checkAuth } = require("../middlewares/auth");
+const { uploadFile } = require("../middlewares/uploadfile");
 
 router.post("/register", signUp);
 router.post("/login", login);
@@ -25,6 +26,7 @@ router.put(
   // upload.single("dp"),
   updateDp
 );
+router.post("/upload-file", uploadFile);
 router.get("/", checkAuth, getUser);
 router.get("/:userId", getUpdatedProfile);
 
