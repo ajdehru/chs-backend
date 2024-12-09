@@ -31,7 +31,7 @@ const appointmentSchema = new Schema(
     },
     reason: {
       type: String,
-      require: true,
+      // require: true,
     },
     comments: {
       type: Number,
@@ -40,20 +40,20 @@ const appointmentSchema = new Schema(
     appointmentType: {
       type: String,
       enum: ["Video", "Audio", "Chat", "Home", "Consult"],
-      default: "Home",
+      default: "Consult",
     },
     appointmentFor: {
       type: String,
       enum: ["Self", "Dependent"],
       default: "Self",
     },
-    symtoms: {
+    symptoms: {
       type: String,
-      require: null,
+      default: null,
     },
     attachment: {
       type: String,
-      require: null,
+      default: null,
     },
     appointmentPersonName: {
       type: String,

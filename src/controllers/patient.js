@@ -119,23 +119,23 @@ const createAppointment = async (req, res) => {
       appointmentFor,
       appointmentPersonName,
       isInsurance,
-      symtoms,
+      symptoms,
       appointmentType,
     } = req.body;
 
-    if (!date || !reason || !refDoctor) {
-      return sendResponse(
-        res,
-        400,
-        "Appointment date ,reason and ref doctor are required!"
-      );
+    if (!refDoctor) {
+      return sendResponse(res, 400, "Reference doctor is required!");
     }
 
     const newAppointment = new PatientAppointment({
       ...req.body,
-      appointmentFor: capitalizeFirstLetter(appointmentFor),
+      appointmentFor: appointmentFor
+        ? capitalizeFirstLetter(appointmentFor)
+        : "Self",
       appointmentPersonName: capitalizeFirstLetter(appointmentPersonName),
-      appointmentType: capitalizeFirstLetter(appointmentType),
+      appointmentType: appointmentType
+        ? capitalizeFirstLetter(appointmentType)
+        : "Consult",
       patientId: req.params?.patientId,
     });
     await newAppointment.save();
@@ -206,7 +206,7 @@ const getAppointmentById = async (req, res) => {
     }
 
     const Appointment = await PatientAppointment.findById(req.params?.id)
-      // .populate("refDoctor")
+      .populate("refDoctor")
       .populate("patientId")
       .exec();
 
@@ -235,7 +235,7 @@ const updateAppointmentById = async (req, res) => {
     return sendResponse(
       res,
       201,
-      "Appointment is updated successful.",
+      "Appointment updated successfully.",
       Appointment
     );
   } catch (error) {

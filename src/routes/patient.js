@@ -26,7 +26,7 @@ const {
   addReportAttachment,
   addPrescriptionAttachment,
 } = require("../controllers/patient");
-const { generateSymptomSummary } = require("../controllers/symtoms");
+const { generateSymptomSummary } = require("../controllers/symptoms");
 
 router.put("/:userId", checkAuth, updateProfile);
 
@@ -50,7 +50,11 @@ router.put("/medical/attachment/:id", checkAuth, addReportAttachment);
 router.delete("/medical/:id", checkAuth, deleteReport);
 
 router.post("/prescription/:patientId", checkAuth, createPrescription);
-router.put("/prescription/attachment/:id", checkAuth, addPrescriptionAttachment); 
+router.put(
+  "/prescription/attachment/:id",
+  checkAuth,
+  addPrescriptionAttachment
+);
 router.get("/prescription/:patientId", checkAuth, getPrescriptions);
 router.get("/prescription-single/:id", checkAuth, getPrescriptionById);
 router.delete("/prescription/:id", checkAuth, deletePrescription);
