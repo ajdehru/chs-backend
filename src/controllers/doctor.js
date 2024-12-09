@@ -211,22 +211,36 @@ const getAllPatientAppointment = async (req, res) => {
 
     if (time) {
       const now = new Date();
+      const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+      const endOfToday = new Date(now.setHours(23, 59, 59, 999));
+
       if (time === "today") {
-        const startOfDay = new Date(now.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(now.setHours(23, 59, 59, 999));
-        queryParam.date = { $gte: startOfDay, $lte: endOfDay };
+        queryParam.date = { $gte: startOfToday, $lte: endOfToday };
       } else if (time === "week") {
-        const startOfWeek = new Date(now.setDate(now.getDate() - 7));
-        queryParam.date = { $gte: startOfWeek, $lte: now };
+        const startOfWeek = new Date(
+          now.setDate(now.getDate() - now.getDay() + 1)
+        );
+        startOfWeek.setHours(0, 0, 0, 0);
+        const endOfWeek = new Date(now.setDate(startOfWeek.getDate() + 6));
+        endOfWeek.setHours(23, 59, 59, 999);
+
+        queryParam.date = { $gte: startOfWeek, $lte: endOfWeek };
       } else if (time === "month") {
-        const startOfMonth = new Date(now.setMonth(now.getMonth() - 1));
-        queryParam.date = { $gte: startOfMonth, $lte: now };
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        endOfMonth.setHours(23, 59, 59, 999);
+
+        queryParam.date = { $gte: startOfMonth, $lte: endOfMonth };
       }
     }
 
-    const Appointments = await PatientAppointment.find(queryParam)
+    let Appointments = await PatientAppointment.find(queryParam)
       .populate("patientId")
       .exec();
+
+    if (Appointments && Appointments?.length > 0) {
+      Appointments = await getWithProfileImg(Appointments);
+    }
 
     return sendResponse(
       res,
@@ -236,6 +250,28 @@ const getAllPatientAppointment = async (req, res) => {
     );
   } catch (error) {
     return sendResponse(res, 500, error.message);
+  }
+};
+
+const getWithProfileImg = async (appointments) => {
+  try {
+    const newAppointments = await Promise.all(
+      appointments.map(async (it) => {
+        const user = await User.findOne({ profile: it?.patientId?._id }); // Use `_id` from populated patientId
+        return {
+          ...it._doc, 
+          patientId: {
+            ...it?.patientId._doc, 
+            coverImage: user?.coverImage || null,
+          },
+        };
+      })
+    );
+
+    return newAppointments;
+  } catch (error) {
+    console.error("Error fetching user with profile:", error);
+    throw new Error("Failed to fetch user with profile.");
   }
 };
 
@@ -249,7 +285,7 @@ const getAllPatientsWithAppointmentDetails = async (req, res) => {
 
     // Fetch all unique patients for the doctor
     const patients = await PatientAppointment.aggregate([
-      { $match: { refDoctor:new mongoose.Types.ObjectId(doctorId) } },
+      { $match: { refDoctor: new mongoose.Types.ObjectId(doctorId) } },
       {
         $group: {
           _id: "$patientId",

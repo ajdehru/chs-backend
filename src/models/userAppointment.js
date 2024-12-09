@@ -22,7 +22,7 @@ const appointmentSchema = new Schema(
     },
     refDoctor: {
       type: Schema.Types.ObjectId,
-      ref: "doctorProfile",
+      ref: "DoctorProfile",
       default: null,
     },
     amount: {

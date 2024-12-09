@@ -184,7 +184,7 @@ const getAppointments = async (req, res) => {
     const Appointments = await PatientAppointment.find({
       userId: req.params?.userId,
     })
-      // .populate("refDoctor")
+      .populate("refDoctor")
       .populate("patientId")
       .exec();
 
