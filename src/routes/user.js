@@ -10,6 +10,7 @@ const {
   forgotPassword,
   getUpdatedProfile,
   verifyOtp,
+  resetPassword,
 } = require("../controllers/user");
 const { upload } = require("../middlewares/multerS3");
 const { checkAuth } = require("../middlewares/auth");
@@ -19,6 +20,7 @@ router.post("/register", signUp);
 router.post("/login", login);
 router.post("/forgot-password", forgotPassword);
 router.put("/verify-otp", verifyOtp);
+router.put("/reset-password", resetPassword);
 router.put("/update/:userId", updateUser);
 router.put(
   "/change-dp",

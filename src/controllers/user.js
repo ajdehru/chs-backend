@@ -64,7 +64,7 @@ const signUp = async (req, res) => {
 
     await newUser.save();
 
-    sendOtpToPhoneNumber(phoneNumber);
+    await sendOtpToPhoneNumber(phoneNumber);
 
     const user = await getUserWithProfile(newUser?.email);
 
@@ -89,6 +89,39 @@ const forgotPassword = async (req, res) => {
     await sendOtpToPhoneNumber(user?.phoneNumber);
 
     return sendResponse(res, 200, "Otp sent to phone number successfully.");
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { phoneNumber, otp, password } = req.body;
+
+    const userOtp = await UserOtp.findOne({ phoneNumber, otp });
+    if (!userOtp) {
+      return sendResponse(res, 400, "No otp found ");
+    }
+
+    if (userOtp?.otp !== otp || userOtp?.otpExpiry < Date.now()) {
+      return sendResponse(res, 400, "Invalid or expired OTP");
+    }
+
+    await UserOtp.findByIdAndDelete(userOtp?._id);
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    let user = await User?.findOneAndUpdate(
+      { phoneNumber },
+      { password: hashedPassword }
+    );
+
+    return sendResponse(
+      res,
+      200,
+      "Password reset successfully",
+      getUserWithProfile(user?.email)
+    );
   } catch (error) {
     return sendResponse(res, 500, error.message);
   }
@@ -331,11 +364,12 @@ const getUserWithProfile = async (email) => {
     if (!user) return null;
 
     ({ password, notification, ...withoutSensitiveInfo } = user.toObject());
-    const profile = user.role!="Doctor"
-      ? await patientProfile.findById(user.profile)
-      : await doctorProfile.findById(user.profile);
+    const profile =
+      user.role != "Doctor"
+        ? await patientProfile.findById(user.profile)
+        : await doctorProfile.findById(user.profile);
 
-      console.log(profile,"user")
+    console.log(profile, "user");
     return {
       ...withoutSensitiveInfo,
       profile: profile ? profile.toObject() : null,
@@ -372,4 +406,5 @@ module.exports = {
   getUserWithProfile,
   getUpdatedProfile,
   verifyOtp,
+  resetPassword,
 };
