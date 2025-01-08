@@ -9,6 +9,7 @@ const {
   capitalizeFirstLetter,
 } = require("../utils");
 const { default: mongoose } = require("mongoose");
+const patientProfile = require("../models/patientProfile");
 
 const updateProfile = async (req, res) => {
   try {
@@ -115,16 +116,16 @@ const getDoctorDashboardData = async (req, res) => {
     }
 
     const now = new Date();
-    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+    const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+    const endOfToday = new Date(now.setHours(23, 59, 59, 999));
 
     // Query for today's appointments
     const todayAppointments = await PatientAppointment.find({
       refDoctor: doctorId,
-      date: { $gte: startOfDay, $lte: endOfDay },
+      date: { $gte: startOfToday, $lte: endOfToday },
     }).populate("patientId");
 
-    // Query for all patients (unique patients)
+    // Query for all unique patients
     const allPatients = await PatientAppointment.find({
       refDoctor: doctorId,
     }).distinct("patientId");
@@ -144,18 +145,21 @@ const getDoctorDashboardData = async (req, res) => {
 
     // Query for yesterday's data for percentage analysis
     const startOfYesterday = new Date(
-      startOfDay.setDate(startOfDay.getDate() - 1)
+      startOfToday.setDate(startOfToday.getDate() - 1)
     );
-    const endOfYesterday = new Date(endOfDay.setDate(endOfDay.getDate() - 1));
+    const endOfYesterday = new Date(
+      endOfToday.setDate(endOfToday.getDate() - 1)
+    );
 
     const yesterdayAppointments = await PatientAppointment.find({
       refDoctor: doctorId,
       date: { $gte: startOfYesterday, $lte: endOfYesterday },
     });
 
-    // Calculate percentage change for appointments and patients
+    // Calculate percentage change for today's appointments and patients
     const yesterdayAppointmentsCount = yesterdayAppointments.length;
     const todayAppointmentsCount = todayAppointments.length;
+
     const appointmentsChange =
       yesterdayAppointmentsCount === 0
         ? todayAppointmentsCount * 100
@@ -173,6 +177,25 @@ const getDoctorDashboardData = async (req, res) => {
             yesterdayPatients.length) *
           100;
 
+    // Query for total patients change compared to last week
+    const startOfLastWeek = new Date(
+      now.setDate(now.getDate() - now.getDay() - 6)
+    ); // Start of last week
+    const endOfLastWeek = new Date(now.setDate(startOfLastWeek.getDate() + 6)); // End of last week
+
+    const lastWeekPatients = await PatientAppointment.find({
+      refDoctor: doctorId,
+      date: { $gte: startOfLastWeek, $lte: endOfLastWeek },
+    }).distinct("patientId");
+
+    const lastWeekPatientsCount = lastWeekPatients.length;
+    const totalPatientsChange =
+      lastWeekPatientsCount === 0
+        ? 0
+        : ((allPatients.length - lastWeekPatientsCount) /
+            lastWeekPatientsCount) *
+          100;
+
     // Construct response data
     const responseData = {
       lastUpcomingAppointment,
@@ -182,6 +205,7 @@ const getDoctorDashboardData = async (req, res) => {
       percentageChange: {
         appointments: appointmentsChange.toFixed(2),
         patients: patientsChange.toFixed(2),
+        totalPatients: totalPatientsChange.toFixed(2),
       },
     };
 
@@ -202,7 +226,7 @@ const getAllPatientAppointment = async (req, res) => {
       return sendResponse(res, 400, "Doctor id is required!");
     }
 
-    let { status, time } = req.query;
+    let { status, time, startDate, endDate } = req.query;
     let queryParam = { refDoctor: req.params?.doctorId };
 
     if (status) {
@@ -217,21 +241,25 @@ const getAllPatientAppointment = async (req, res) => {
       if (time === "today") {
         queryParam.date = { $gte: startOfToday, $lte: endOfToday };
       } else if (time === "week") {
-        const startOfWeek = new Date(
-          now.setDate(now.getDate() - now.getDay() + 1)
-        );
-        startOfWeek.setHours(0, 0, 0, 0);
-        const endOfWeek = new Date(now.setDate(startOfWeek.getDate() + 6));
-        endOfWeek.setHours(23, 59, 59, 999);
-
-        queryParam.date = { $gte: startOfWeek, $lte: endOfWeek };
+        const sevenDaysAgo = new Date(now.setDate(now.getDate() - 6));
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+        queryParam.date = { $gte: sevenDaysAgo, $lte: endOfToday };
       } else if (time === "month") {
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        endOfMonth.setHours(23, 59, 59, 999);
-
-        queryParam.date = { $gte: startOfMonth, $lte: endOfMonth };
+        const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 29));
+        thirtyDaysAgo.setHours(0, 0, 0, 0);
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+        queryParam.date = { $gte: thirtyDaysAgo, $lte: endOfToday };
       }
+    }
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      queryParam.date = { $gte: start, $lte: end };
     }
 
     let Appointments = await PatientAppointment.find(queryParam)
@@ -259,9 +287,9 @@ const getWithProfileImg = async (appointments) => {
       appointments.map(async (it) => {
         const user = await User.findOne({ profile: it?.patientId?._id }); // Use `_id` from populated patientId
         return {
-          ...it._doc, 
+          ...it._doc,
           patientId: {
-            ...it?.patientId._doc, 
+            ...it?.patientId._doc,
             coverImage: user?.coverImage || null,
           },
         };
@@ -283,38 +311,39 @@ const getAllPatientsWithAppointmentDetails = async (req, res) => {
       return sendResponse(res, 400, "Doctor ID is required!");
     }
 
-    // Fetch all unique patients for the doctor
+    // Step 1: Fetch all unique patient IDs for the doctor
     const patients = await PatientAppointment.aggregate([
       { $match: { refDoctor: new mongoose.Types.ObjectId(doctorId) } },
       {
         $group: {
           _id: "$patientId",
-          patientName: { $first: "$appointmentPersonName" },
         },
       },
     ]);
 
+    // Step 2: Fetch appointment details for each patient
     const patientDetails = await Promise.all(
       patients.map(async (patient) => {
         const lastCompletedAppointment = await PatientAppointment.findOne({
           refDoctor: doctorId,
           patientId: patient._id,
-          status: "Completed",
+          status: { $in: ["Completed", "Cancelled"] }, // Use $in for multiple conditions
         })
-          .sort({ date: -1 })
+          .sort({ date: -1 }) // Latest first
           .select("date time reason comments appointmentType");
 
         const upcomingAppointment = await PatientAppointment.findOne({
           refDoctor: doctorId,
           patientId: patient._id,
-          status: "Pending",
+          status: { $in: ["Accepted", "Pending"] }, // Use $in for multiple conditions
         })
-          .sort({ date: 1 })
+          .sort({ date: 1 }) // Earliest first
           .select("date time reason comments appointmentType");
 
+        const patientData = await patientProfile.findOne({ _id: patient._id });
+
         return {
-          patientId: patient._id,
-          patientName: patient.patientName,
+          patientId: patientData || null,
           lastCompletedAppointment,
           upcomingAppointment,
         };
@@ -328,6 +357,7 @@ const getAllPatientsWithAppointmentDetails = async (req, res) => {
       patientDetails
     );
   } catch (error) {
+    console.error("Error in getAllPatientsWithAppointmentDetails:", error);
     return sendResponse(res, 500, error.message);
   }
 };
@@ -354,6 +384,45 @@ const getDoctorClinic = async (req, res) => {
     return sendResponse(res, 500, error.message);
   }
 };
+
+const getAppointmentsCountForAllStatuses = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+
+    if (!doctorId) {
+      return sendResponse(res, 400, "Doctor ID is required!");
+    }
+
+    const objectIdDoctorId = new mongoose.Types.ObjectId(doctorId);
+
+    const counts = await PatientAppointment.aggregate([
+      { $match: { refDoctor: objectIdDoctorId } },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    console.log(counts, "AppointmentsCount");
+
+    const result = counts.reduce((acc, curr) => {
+      acc[curr._id] = curr.count;
+      return acc;
+    }, {});
+
+    return sendResponse(
+      res,
+      200,
+      "Doctor's appointment counts fetched successfully.",
+      result
+    );
+  } catch (error) {
+    return sendResponse(res, 500, error.message);
+  }
+};
+
 module.exports = {
   updateProfile,
   getAllDoctors,
@@ -361,4 +430,5 @@ module.exports = {
   getDoctorDashboardData,
   getDoctorClinic,
   getAllPatientsWithAppointmentDetails,
+  getAppointmentsCountForAllStatuses,
 };

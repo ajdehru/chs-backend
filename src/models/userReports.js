@@ -16,10 +16,6 @@ const reportsSchema = new Schema(
       type: String,
       default: null,
     },
-    date: {
-      type: Date,
-      default: null,
-    },
     // refDoctor: {
     //   type: Schema.Types.ObjectId,
     //   ref: "doctorProfile",

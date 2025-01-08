@@ -2,6 +2,7 @@ const { FRONTEND_URL } = require("../configs");
 const sendSms = require("../configs/sendSms");
 const doctorProfile = require("../models/doctorProfile");
 const patientProfile = require("../models/patientProfile");
+const pharmaProfile = require("../models/pharmaProfile");
 const User = require("../models/user");
 const UserOtp = require("../models/userOtp");
 const {
@@ -23,10 +24,11 @@ const signUp = async (req, res) => {
 
     const existingUser = await User.findOne({ phoneNumber });
     if (existingUser) {
-      if (existingUser?.email == email?.toLowerCase()) {
-        return sendResponse(res, 400, "This email is already used");
-      }
       return sendResponse(res, 400, "This phone number is already registered");
+    }
+    const existingEmailUser = await User.findOne({ email });
+    if (existingEmailUser) {
+      return sendResponse(res, 400, "This email is already used");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -43,6 +45,13 @@ const signUp = async (req, res) => {
       newProfile = new doctorProfile({
         firstName: name,
         displayName: name,
+        phoneNumber,
+        email: email?.toLowerCase(),
+        address,
+      });
+    } else if (role?.toLowerCase() == "pharmacy retailers") {
+      newProfile = new pharmaProfile({
+        firstName: name,
         phoneNumber,
         email: email?.toLowerCase(),
         address,

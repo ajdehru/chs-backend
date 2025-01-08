@@ -11,6 +11,7 @@ const {
   userRoutes,
   patientRoutes,
   doctorRoutes,
+  adminRoutes,
 } = require("./routes/index.js");
 
 const app = express();
@@ -26,12 +27,12 @@ app.use("/uploads", express.static("uploads"));
 app.use("/user", userRoutes);
 app.use("/patient", patientRoutes);
 app.use("/doctor", doctorRoutes);
+app.use("/admin", adminRoutes);
 
 // app.use("/content", modelContentRoutes);
 // app.use("/interaction", interactionRoutes);
 // app.use("/chat", chatRoutes);
 // app.use("/payment", paymentRoutes);
-// app.use("/admin", adminRoutes);
 
 // Socket setup
 global.io = new Server(server, {

@@ -11,9 +11,9 @@ function responseError(statusCode, message) {
   return response;
 }
 
-const sendResponse = (res, code, message, data, addOns) => {
+const sendResponse = (res, code, message, data, pagination) => {
   if (code == 200 || code == 201) {
-    return res.status(code).json({ status: true, message, data, addOns });
+    return res.status(code).json({ status: true, message, data, pagination });
   } else if (code == 404) {
     return res.status(code).json({ status: true, message, data: [] });
   }

@@ -65,12 +65,20 @@ const appointmentSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["Pending", "Completed", "Cancelled"],
+      enum: ["Pending", "Accepted", "Completed", "Cancelled"],
       default: "Pending",
     },
     testStatus: {
       type: String,
       enum: ["Normal", "High"],
+      default: null,
+    },
+    prescriptionFile: {
+      type: String,
+      default: null,
+    },
+    prescriptionDate: {
+      type: Date,
       default: null,
     },
     updatedAt: {
@@ -87,7 +95,7 @@ const appointmentSchema = new Schema(
   }
 );
 
-appointmentSchema.index({ date: 1 });
+appointmentSchema.index({ status: 1 });
 appointmentSchema.index({ refDoctor: 1 });
 
 module.exports = mongoose.model("PatientAppointment", appointmentSchema);

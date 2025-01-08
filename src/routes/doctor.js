@@ -10,9 +10,11 @@ const {
   getDoctorClinic,
   getDoctorDashboardData,
   getAllPatientsWithAppointmentDetails,
+  getAppointmentsCountForAllStatuses,
 } = require("../controllers/doctor");
 
 router.put("/:userId", checkAuth, updateProfile);
+router.get("/appointment-count/:doctorId", getAppointmentsCountForAllStatuses);
 router.get("/appointment/:doctorId", getAllPatientAppointment);
 router.get("/patient/:doctorId", getAllPatientsWithAppointmentDetails);
 router.get("/dashboard/:doctorId", getDoctorDashboardData);

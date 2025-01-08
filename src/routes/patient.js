@@ -25,6 +25,7 @@ const {
   deleteSymptomReport,
   addReportAttachment,
   addPrescriptionAttachment,
+  getComAppointments,
 } = require("../controllers/patient");
 const { generateSymptomSummary } = require("../controllers/symptoms");
 
@@ -38,26 +39,28 @@ router.put(
   addAppointmentAttachment
 );
 router.get("/appointment/:patientId", checkAuth, getAppointments);
+router.get("/appointment-comp/:patientId", checkAuth, getComAppointments);
 router.get("/appointment/single/:id", checkAuth, getAppointmentById);
 router.put("/appointment/:id", checkAuth, updateAppointmentById);
-router.put("/appointment/:status/:id", checkAuth, updateAppointmentStatus);
+// router.put("/appointment/:status/:id", checkAuth, updateAppointmentStatus);
 
 router.post("/medical/:patientId", checkAuth, createReport);
 router.get("/medical/:patientId", checkAuth, getReports);
-router.get("/medical-single/:id", checkAuth, getReportById);
+// router.get("/medical-single/:id", checkAuth, getReportById);
 router.put("/medical/:id", checkAuth, updateReportById);
-router.put("/medical/attachment/:id", checkAuth, addReportAttachment);
+// router.put("/medical/attachment/:id", checkAuth, addReportAttachment);
 router.delete("/medical/:id", checkAuth, deleteReport);
 
-router.post("/prescription/:patientId", checkAuth, createPrescription);
-router.put(
-  "/prescription/attachment/:id",
-  checkAuth,
-  addPrescriptionAttachment
-);
+// router.post("/prescription/:patientId", checkAuth, createPrescription);
+// router.put(
+//   "/prescription/attachment/:id",
+//   checkAuth,
+//   addPrescriptionAttachment
+// );
+router.put("/prescription/:id", checkAuth, addPrescriptionAttachment);
 router.get("/prescription/:patientId", checkAuth, getPrescriptions);
-router.get("/prescription-single/:id", checkAuth, getPrescriptionById);
-router.delete("/prescription/:id", checkAuth, deletePrescription);
+// router.get("/prescription-single/:id", checkAuth, getPrescriptionById);
+// router.delete("/prescription/:id", checkAuth, deletePrescription);
 
 router.post("/symptom-checker", generateSymptomSummary);
 router.post("/save-checked-symptom/:patientId", saveSymptomReport);
