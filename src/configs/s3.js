@@ -3,11 +3,12 @@ const {
   AWS_ACCESS_KEY_ID,
   AWS_SECRET_ACCESS_KEY,
   AWS_BUCKET_NAME,
+  AWS_REGION,
 } = require("./index");
 const multerS3 = require("multer-s3");
 
 const s3 = new S3Client({
-  region: "us-east-1",
+  region: AWS_REGION,
   credentials: {
     accessKeyId: AWS_ACCESS_KEY_ID,
     secretAccessKey: AWS_SECRET_ACCESS_KEY,

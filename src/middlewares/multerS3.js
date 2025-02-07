@@ -14,6 +14,7 @@ const uploadVideo = multer({
   storage: multerS3({
     ...s3Config,
     metadata: function (req, file, cb) {
+      console.log(req, file,"req, file")
       cb(null, { ContentType: "application/octet-stream" });
     },
   }),

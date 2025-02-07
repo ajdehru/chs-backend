@@ -28,7 +28,7 @@ router.put(
   // upload.single("dp"),
   updateDp
 );
-router.post("/upload-file", uploadFile);
+router.post("/upload-file",upload.single("file"), uploadFile);
 router.get("/", checkAuth, getUser);
 router.get("/:userId", getUpdatedProfile);
 

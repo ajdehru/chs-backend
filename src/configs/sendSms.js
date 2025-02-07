@@ -13,7 +13,7 @@ const sendSms = async (phoneNumber, message) => {
     const response = await client.messages.create({
       body: message,
       from: TWILIO_PHONE_NUMBER,
-      to: phoneNumber,
+      to: `+91${phoneNumber}`,
     });
 
     console.log(`SMS sent successfully to ${phoneNumber}: SID ${response.sid}`);

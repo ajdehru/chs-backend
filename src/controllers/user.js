@@ -17,7 +17,7 @@ const bcrypt = require("bcrypt");
 const signUp = async (req, res) => {
   try {
     const { name, phoneNumber, email, password, address, role } = req.body;
-
+  
     if (!phoneNumber || !password) {
       return sendResponse(res, 400, "Phone number and password are required!");
     }
@@ -401,7 +401,7 @@ const sendOtpToPhoneNumber = async (phoneNumber) => {
 
   console.log("Otp : ", otp);
   const message = `Your verification code is ${otp}. It is valid for 10 minutes.`;
-  // await sendSms(phoneNumber, message);
+  await sendSms(phoneNumber, message);
 };
 
 module.exports = {
